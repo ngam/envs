@@ -1,5 +1,5 @@
-FROM mambaorg/micromamba:0.24.0
-COPY --chown=$MAMBA_USER:$MAMBA_USER cgc/env.yml /tmp/env.yml
+FROM condaforge/linux-anvil-cuda:11.7
+COPY cgc/env.yaml /tmp/env.yaml
 ENV CONDA_OVERRIDE_CUDA="11.2"
-RUN micromamba install -y -n base -f /tmp/env.yml && \
-    micromamba clean --all --yes
+RUN /opt/conda/bin/mamba env create -f /tmp/env.yaml && \
+    mamba clean --all --yes
