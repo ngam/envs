@@ -11,7 +11,7 @@ on:
     branches: [ main ]
 
 jobs:
-  blds:
+  ocis:
     strategy:
       matrix:
         registry: ["ghcr.io/ngam"]
@@ -51,3 +51,63 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: ${{ github.ref == 'refs/heads/main' }}
           tags: ${{ matrix.registry }}/envs:${{ matrix.subject }}
+
+
+  sifs:
+    needs: ocis
+    strategy:
+      matrix:
+        reg: ["ghcr.io/ngam"]
+        sub: ["cgc"]
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    
+    steps:
+
+      - name: Make space
+        run: |
+
+          echo "Listing 100 largest packages"
+          dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
+          df -h
+          echo "Removing large packages"
+          sudo apt-get remove -y '^dotnet-.*'
+          sudo apt-get remove -y '^llvm-.*'
+          sudo apt-get remove -y 'php.*'
+          sudo apt-get remove -y '^mongodb-.*'
+          sudo apt-get remove -y '^mysql-.*'
+          sudo apt-get remove -y azure-cli google-cloud-sdk hhvm google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          df -h
+          echo "Removing large directories"
+          # deleting 15GB
+          rm -rf /usr/share/dotnet/
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h
+      
+      # - name: Checkout 
+      #   uses: actions/checkout@v3
+
+      - name: Singularity install
+        run: |
+            wget -P /tmp/ https://github.com/sylabs/singularity/releases/download/v3.10.0/singularity-ce_3.10.0-focal_amd64.deb
+            sudo apt-get install /tmp/singularity-ce_3.10.0-focal_amd64.deb
+            sudo rm -rf /tmp/*
+
+      - name: Singularity build
+        run: |
+            sudo singularity build /tmp/sin.sif docker://${{ matrix.reg }}/envs:${{ matrix.sub }}e && sudo singularity cache clean --force
+
+      - if: ${{ github.ref == 'refs/heads/main' }}
+        name: Singularity push
+        run: |
+            echo ${{ secrets.GITHUB_TOKEN }} | singularity remote login -u ngam --password-stdin oras://ghcr.io && singularity push /tmp/sin.sif oras://ghcr.io/ngam/envs:s${{ matrix.sub }}
+
+
