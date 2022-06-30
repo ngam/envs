@@ -103,7 +103,7 @@ jobs:
 
       - name: Singularity build
         run: |
-            sudo singularity build /tmp/sin.sif docker://${{ matrix.reg }}/envs:${{ matrix.sub }}e && sudo singularity cache clean --force
+            sudo singularity build /tmp/sin.sif docker://${{ matrix.reg }}/envs:${{ matrix.sub }} && sudo singularity cache clean --force
 
       - if: ${{ github.ref == 'refs/heads/main' }}
         name: Singularity push
