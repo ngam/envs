@@ -1,5 +1,5 @@
 FROM condaforge/linux-anvil-cuda:11.7
-COPY cgc/env.yaml /tmp/env.yaml
+COPY cgc/env.yaml /tmp/env.yml
 ENV CONDA_OVERRIDE_CUDA="11.2"
-RUN /opt/conda/bin/mamba env create -f /tmp/env.yaml && \
+RUN /opt/conda/bin/mamba env create -f /tmp/env.yml && \
     mamba clean --all --yes
