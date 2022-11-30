@@ -1,4 +1,4 @@
-FROM condaforge/linux-anvil-cuda:11.7
+FROM condaforge/linux-anvil-cuda:11.8
 
 COPY cgc/env.yml /tmp/env.yml
 
